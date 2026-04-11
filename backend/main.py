@@ -80,6 +80,8 @@ app.add_middleware(
         "http://127.0.0.1:8080",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://mp-cert-verify-4cp9.vercel.app",
+        "https://mp-cert-verify-4cp9-hzuk1om51-algovista97s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -332,15 +334,12 @@ async def create_certificate(
     db.commit()
     db.refresh(cert)
 
-    # Generate QR code
     qr_abs = generate_qr(cert.id, CERTVERIFY_QR_BASE_URL)
     cert.qr_path = qr_abs
     db.add(cert)
     db.commit()
     db.refresh(cert)
 
-    # ── Anchor hash to Polygon blockchain (non-blocking) ─────────────────────
-    # If blockchain is not configured this returns None and does not crash
     tx_hash = store_hash_on_chain(cert.id, cert_hash)
     if tx_hash:
         cert.blockchain_tx_hash = tx_hash
@@ -558,7 +557,6 @@ async def verify_upload(
         }
 
     # ── Layer 4: Blockchain Hash Cross-Check ──────────────────────────────────
-    # Non-blocking — if blockchain not configured returns DISABLED
     blockchain_result = verify_hash_on_chain(cert_id, cert.cert_hash)
     blockchain_status = blockchain_result.get("status", "DISABLED")
     blockchain_detail = blockchain_result.get("detail", "")
