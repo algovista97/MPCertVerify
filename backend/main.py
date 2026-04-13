@@ -71,13 +71,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_allowed = os.environ.get("ALLOWED_ORIGINS", "")
+_cors_origins: list = ["*"] if _allowed == "*" else [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "https://mp-cert-verify-4cp9.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 uploads_abs = _uploads_dir()
 os.makedirs(uploads_abs, exist_ok=True)
