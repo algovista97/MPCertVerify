@@ -49,7 +49,7 @@ from backend.schemas import (
     VerifyPublicResponse,
 )
 
-CERTVERIFY_QR_BASE_URL = os.environ.get("CERTVERIFY_QR_BASE_URL", "http://127.0.0.1:8080")
+
 CERTVERIFY_PUBLIC_API = os.environ.get("CERTVERIFY_PUBLIC_API", "http://127.0.0.1:8000")
 
 
@@ -63,6 +63,10 @@ def _uploads_dir() -> str:
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(backend_dir, "uploads")
 
+# CORS DEBUG - remove after fixing
+print(f"[STARTUP] CORS will allow: ALL ORIGINS (*)")
+
+CERTVERIFY_QR_BASE_URL = os.environ.get("CERTVERIFY_QR_BASE_URL", "http://127.0.0.1:8080")
 
 app = FastAPI(
     title="CertVerify API",
@@ -82,7 +86,7 @@ _cors_origins: list = ["*"] if _allowed == "*" else [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
