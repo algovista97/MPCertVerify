@@ -63,9 +63,6 @@ def _uploads_dir() -> str:
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(backend_dir, "uploads")
 
-# CORS DEBUG - remove after fixing
-print(f"[STARTUP] CORS will allow: ALL ORIGINS (*)")
-
 CERTVERIFY_QR_BASE_URL = os.environ.get("CERTVERIFY_QR_BASE_URL", "http://127.0.0.1:8080")
 
 app = FastAPI(
@@ -75,19 +72,29 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-_allowed = os.environ.get("ALLOWED_ORIGINS", "")
-_cors_origins: list = ["*"] if _allowed == "*" else [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "https://mp-cert-verify-4cp9.vercel.app",
-]
+_cors_raw = os.environ.get("ALLOWED_ORIGINS", "")
+if _cors_raw.strip() == "*":
+    _cors_origins: list = ["*"]
+    _cors_credentials = False
+elif _cors_raw.strip():
+    _cors_origins = [o.strip() for o in _cors_raw.split(",")]
+    _cors_credentials = True
+else:
+    _cors_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "https://mp-cert-verify-4cp9.vercel.app",
+    ]
+    _cors_credentials = True
+
+print(f"[STARTUP] CORS origins: {_cors_origins}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

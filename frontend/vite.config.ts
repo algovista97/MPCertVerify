@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
             },
           },
         }
-      : {},
+      : undefined,
   plugins: [react()],
   resolve: {
     alias: {

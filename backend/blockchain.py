@@ -9,31 +9,11 @@ import os
 from typing import Optional
 
 # ── Configuration ────────────────────────────────────────────────────────────
-# Fill these in after deploying your smart contract
-
-# Your Alchemy RPC URL for Polygon Amoy
-ALCHEMY_URL = os.environ.get(
-    "CERTVERIFY_ALCHEMY_URL",
-    "https://polygon-amoy.g.alchemy.com/v2/pAvolrRajrs4mewfKZt7F"
-)
-
-# Your deployed contract address (from Remix after deployment)
-CONTRACT_ADDRESS = os.environ.get(
-    "CERTVERIFY_CONTRACT_ADDRESS",
-    "0xa46F9225CC2B9a41cbC4081a1c73458f2739BBf3"
-)
-
-# Your MetaMask wallet private key (NEVER commit this to GitHub)
-WALLET_PRIVATE_KEY = os.environ.get(
-    "CERTVERIFY_PRIVATE_KEY",
-    "b3b02375848f891c9fa7e7aa21d536a839945b72e157c1695954affca7fa284f"
-)
-
-# Your MetaMask wallet address
-WALLET_ADDRESS = os.environ.get(
-    "CERTVERIFY_WALLET_ADDRESS",
-    "0x67a63852b5249cD0431729Dfa967a56C6AEEa273"
-)
+# All sensitive blockchain values must come from environment variables.
+ALCHEMY_URL = os.environ.get("CERTVERIFY_ALCHEMY_URL", "")
+CONTRACT_ADDRESS = os.environ.get("CERTVERIFY_CONTRACT_ADDRESS", "")
+WALLET_PRIVATE_KEY = os.environ.get("CERTVERIFY_PRIVATE_KEY", "")
+WALLET_ADDRESS = os.environ.get("CERTVERIFY_WALLET_ADDRESS", "")
 
 # Contract ABI — paste your ABI here
 CONTRACT_ABI = [
@@ -203,13 +183,8 @@ def _get_web3():
     if _web3 is not None:
         return _web3
 
-    # Check if all required config is set
-    if (
-        "YOUR_ALCHEMY_KEY_HERE" in ALCHEMY_URL
-        or "YOUR_CONTRACT_ADDRESS_HERE" in CONTRACT_ADDRESS
-        or "YOUR_METAMASK_PRIVATE_KEY_HERE" in WALLET_PRIVATE_KEY
-        or "YOUR_WALLET_ADDRESS_HERE" in WALLET_ADDRESS
-    ):
+    # If any required value is missing, disable blockchain gracefully.
+    if not all([ALCHEMY_URL, CONTRACT_ADDRESS, WALLET_PRIVATE_KEY, WALLET_ADDRESS]):
         print("[Blockchain] Not configured — blockchain anchoring disabled")
         print("[Blockchain] Set CERTVERIFY_ALCHEMY_URL, CERTVERIFY_CONTRACT_ADDRESS,")
         print("[Blockchain] CERTVERIFY_PRIVATE_KEY, CERTVERIFY_WALLET_ADDRESS to enable")
