@@ -10,12 +10,15 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
 
 from backend.auth import (
     authenticate_user,
@@ -72,26 +75,33 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-_cors_raw = os.environ.get('ALLOWED_ORIGINS', '')
-if _cors_raw.strip() == '*':
-    _cors_origins: list = ['*']
-    _cors_credentials = False
-elif _cors_raw.strip():
-    _cors_origins = [o.strip() for o in _cors_raw.split(',')]
-    _cors_credentials = True
-else:
-    _cors_origins = [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:8080',
-        'http://127.0.0.1:8080',
-        'https://mp-cert-verify-4cp9.vercel.app',
-    ]
-    _cors_credentials = True
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-print(f'[STARTUP] CORS origins: {_cors_origins}')
 
-app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_credentials=_cors_credentials, allow_methods=['*'], allow_headers=['*'])
+class ForceCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
+
+app.add_middleware(ForceCORSMiddleware)
+
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str, response: Response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return {}
 
 
 uploads_abs = _uploads_dir()
