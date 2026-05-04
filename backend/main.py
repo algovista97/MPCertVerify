@@ -35,7 +35,6 @@ from backend.hashing import (
     verify_signature,
 )
 from backend.models import Certificate, User, VerificationLog
-from backend.ml.predict import detect_forgery, pdf_to_image
 from backend.qr import generate_qr
 from backend.blockchain import store_hash_on_chain, verify_hash_on_chain
 from backend.schemas import (
@@ -75,33 +74,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+explicit_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://mp-cert-verify-4cp9.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=explicit_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class ForceCORSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: StarletteRequest, call_next):
-        response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        return response
-
-
-app.add_middleware(ForceCORSMiddleware)
-
-
-@app.options("/{rest_of_path:path}")
-async def preflight_handler(rest_of_path: str, response: Response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    return {}
 
 
 uploads_abs = _uploads_dir()
@@ -436,6 +422,9 @@ async def verify_upload(
         db.commit()
 
     # ── Layer 1: AI Forgery Detection ────────────────────────────────────────
+    # Import ML stack lazily so login/auth endpoints don't pay torch startup cost.
+    from backend.ml.predict import detect_forgery, pdf_to_image
+
     ml_label = "unknown"
     ml_conf = 0.0
     ai_check_passed = False

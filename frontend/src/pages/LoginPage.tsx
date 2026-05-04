@@ -5,6 +5,7 @@ import { ShieldCheck, Building2, UserCheck } from "lucide-react";
 import api, { formatApiError } from "@/lib/api";
 import type { UserRole } from "@/lib/jwt";
 import { cn } from "@/lib/utils";
+import { AxiosError } from "axios";
 
 const LoginPage = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -16,6 +17,33 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const isTransientNetworkError = (err: unknown): boolean => {
+    const axiosErr = err as AxiosError;
+    if (!axiosErr || !axiosErr.isAxiosError) return false;
+    if (axiosErr.code === "ERR_NETWORK" || axiosErr.code === "ECONNABORTED") return true;
+    if (!axiosErr.response) return true;
+    const status = axiosErr.response.status;
+    return status === 502 || status === 503 || status === 504;
+  };
+
+  const fetchTokenWithRetry = async (attempts = 3): Promise<string> => {
+    let lastError: unknown = null;
+    for (let i = 0; i < attempts; i += 1) {
+      try {
+        return await fetchToken();
+      } catch (err: unknown) {
+        lastError = err;
+        if (!isTransientNetworkError(err) || i === attempts - 1) {
+          throw err;
+        }
+        await sleep(1200 * (i + 1));
+      }
+    }
+    throw lastError;
+  };
 
   const fetchToken = async () => {
     const body = new URLSearchParams();
@@ -49,12 +77,18 @@ const LoginPage = () => {
           role: registerRole,
         });
       }
-      const token = await fetchToken();
+      const token = await fetchTokenWithRetry();
       login(token);
       const r = parseRoleFromNewToken(token);
       navigate(r === "verifier" ? "/verify" : "/upload", { replace: true });
     } catch (err: unknown) {
-      setError(formatApiError(err));
+      if (isTransientNetworkError(err)) {
+        setError(
+          "Backend is waking up or temporarily unreachable. Please wait a few seconds and try again."
+        );
+      } else {
+        setError(formatApiError(err));
+      }
     } finally {
       setLoading(false);
     }
