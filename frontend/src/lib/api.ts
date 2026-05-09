@@ -1,12 +1,12 @@
 import axios, { AxiosError } from "axios";
 
 /**
- * Browser calls same-origin `/api/...` by default.
+ * Browser calls same-origin `/api/...` in production.
  * - Local dev: Vite proxies `/api` -> FastAPI (:8000)
  * - Vercel: rewrite proxies `/api` -> Render backend
- * Set VITE_API_URL only when you intentionally want a direct API origin.
+ * VITE_API_URL is honored only in development.
  */
-const baseURL = import.meta.env.VITE_API_URL || "/api";
+const baseURL = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || "/api") : "/api";
 
 const api = axios.create({
   baseURL,

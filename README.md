@@ -220,6 +220,8 @@ MODEL_GDRIVE_ID=your_google_drive_model_id
 
 By default, frontend API calls now use `/api`. Keep `VITE_API_URL` unset on Vercel unless you intentionally want direct cross-origin calls.
 
+If deploying from repository root with root `vercel.json`, `/api/*` is also proxied there. In production builds, frontend now always uses `/api` even if `VITE_API_URL` is set.
+
 ---
 
 ## Project Structure
