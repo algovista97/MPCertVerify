@@ -36,7 +36,16 @@ from backend.hashing import (
 )
 from backend.models import Certificate, User, VerificationLog
 from backend.qr import generate_qr
-from backend.blockchain import store_hash_on_chain, verify_hash_on_chain
+"""from backend.blockchain import store_hash_on_chain, verify_hash_on_chain"""
+def store_hash_on_chain(*args, **kwargs):
+    return None
+
+def verify_hash_on_chain(*args, **kwargs):
+    return {
+        "status": "DISABLED",
+        "detail": "Blockchain temporarily disabled",
+        "explorer_url": "",
+    }
 from backend.schemas import (
     CertificateIssueResponse,
     CertificateMyItem,
