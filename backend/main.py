@@ -53,6 +53,7 @@ from backend.schemas import (
 
 
 CERTVERIFY_PUBLIC_API = os.environ.get("CERTVERIFY_PUBLIC_API", "http://127.0.0.1:8000")
+CERTVERIFY_FRONTEND_ORIGINS = os.environ.get("CERTVERIFY_FRONTEND_ORIGINS", "")
 
 
 @asynccontextmanager
@@ -78,15 +79,28 @@ explicit_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://mp-cert-verify-4cp9.vercel.app",
+    "https://vercel-mp-cert-verify-4cp9.vercel.app",
 ]
+
+if CERTVERIFY_FRONTEND_ORIGINS.strip():
+    explicit_origins.extend(
+        origin.strip().rstrip("/")
+        for origin in CERTVERIFY_FRONTEND_ORIGINS.split(",")
+        if origin.strip()
+    )
+
+# Deduplicate while preserving order.
+explicit_origins = list(dict.fromkeys(explicit_origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=explicit_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)*vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,
 )
 
 

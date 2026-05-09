@@ -29,7 +29,7 @@ const LoginPage = () => {
     return status === 502 || status === 503 || status === 504;
   };
 
-  const fetchTokenWithRetry = async (attempts = 3): Promise<string> => {
+  const fetchTokenWithRetry = async (attempts = 5): Promise<string> => {
     let lastError: unknown = null;
     for (let i = 0; i < attempts; i += 1) {
       try {
@@ -39,7 +39,7 @@ const LoginPage = () => {
         if (!isTransientNetworkError(err) || i === attempts - 1) {
           throw err;
         }
-        await sleep(1200 * (i + 1));
+        await sleep(1500 * (i + 1));
       }
     }
     throw lastError;

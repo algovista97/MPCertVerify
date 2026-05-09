@@ -8,6 +8,7 @@ const baseURL = import.meta.env.VITE_API_URL || 'https://certverify-backend-z4ds
 
 const api = axios.create({
   baseURL,
+  timeout: 45000,
 });
 
 api.interceptors.request.use((config) => {

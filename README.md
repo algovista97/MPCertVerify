@@ -206,6 +206,7 @@ npm run dev
 ```env
 CERTVERIFY_QR_BASE_URL=http://localhost:8080
 CERTVERIFY_PUBLIC_API=http://127.0.0.1:8000
+CERTVERIFY_FRONTEND_ORIGINS=https://mp-cert-verify-4cp9.vercel.app,https://vercel-mp-cert-verify-4cp9.vercel.app
 CERTVERIFY_ALCHEMY_URL=your_alchemy_url
 CERTVERIFY_CONTRACT_ADDRESS=your_contract_address
 CERTVERIFY_PRIVATE_KEY=your_wallet_private_key
