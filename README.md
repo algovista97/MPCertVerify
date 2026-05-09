@@ -214,6 +214,12 @@ CERTVERIFY_WALLET_ADDRESS=your_wallet_address
 MODEL_GDRIVE_ID=your_google_drive_model_id
 ```
 
+### Vercel Production Proxy (recommended)
+
+`frontend/vercel.json` rewrites `/api/*` to the Render backend, so browser requests stay same-origin and avoid CORS failures from transient upstream responses.
+
+By default, frontend API calls now use `/api`. Keep `VITE_API_URL` unset on Vercel unless you intentionally want direct cross-origin calls.
+
 ---
 
 ## Project Structure

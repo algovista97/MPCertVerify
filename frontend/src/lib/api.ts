@@ -1,10 +1,12 @@
 import axios, { AxiosError } from "axios";
 
 /**
- * Browser calls same-origin `/api/...`; Vite proxies to FastAPI on :8000.
- * Set VITE_API_URL (e.g. http://127.0.0.1:8000) only if not using the proxy.
+ * Browser calls same-origin `/api/...` by default.
+ * - Local dev: Vite proxies `/api` -> FastAPI (:8000)
+ * - Vercel: rewrite proxies `/api` -> Render backend
+ * Set VITE_API_URL only when you intentionally want a direct API origin.
  */
-const baseURL = import.meta.env.VITE_API_URL || 'https://certverify-backend-z4ds.onrender.com'
+const baseURL = import.meta.env.VITE_API_URL || "/api";
 
 const api = axios.create({
   baseURL,
