@@ -13,12 +13,13 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     f"sqlite:///{_DEFAULT_DB_PATH}",
 )
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace(
-        "postgresql://",
-        "postgresql+psycopg://",
-        1
-    )
+# Handle all PostgreSQL URL variants for psycopg3
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql+psycopg2://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
 
 # SQLite needs check_same_thread=False when used with FastAPI async workers
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
@@ -132,6 +133,14 @@ def _sqlite_migrate_blockchain() -> None:
 def init_db() -> None:
     """Create all tables defined on Base.metadata and run lightweight SQLite upgrades."""
     from backend import models  # noqa: F401 — register models
+    print(f"[DB] Connecting to: {DATABASE_URL[:50]}...")
+    print(f"[DB] Dialect: {engine.dialect.name}")
+    Base.metadata.create_all(bind=engine)
+    print(f"[DB] Tables created: {list(Base.metadata.tables.keys())}")
+    _sqlite_migrate_certificates()
+    _sqlite_migrate_roles_and_fks()
+    _sqlite_migrate_blockchain()
+    print("[DB] Init complete")
 
     Base.metadata.create_all(bind=engine)
     _sqlite_migrate_certificates()
