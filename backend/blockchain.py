@@ -245,18 +245,16 @@ def store_hash_on_chain(cert_id: int, cert_hash: str) -> Optional[str]:
             "gasPrice": w3.eth.gas_price,
             "chainId": 80002  # Polygon Amoy
         })
-
-        # Sign and send
         signed = w3.eth.account.sign_transaction(tx, WALLET_PRIVATE_KEY)
-		tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
 
-		# Wait until Polygon confirms transaction
-		receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
 
-		tx_hash_hex = tx_hash.hex()
+        # Wait until Polygon confirms transaction
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
-		print(f"[Blockchain] Transaction confirmed in block {receipt.blockNumber}")
-       
+        tx_hash_hex = tx_hash.hex()
+
+        print(f"[Blockchain] Transaction confirmed in block {receipt.blockNumber}")
 
         print(f"[Blockchain] Hash stored on chain. TX: {tx_hash_hex}")
         print(f"[Blockchain] View: https://amoy.polygonscan.com/tx/{tx_hash_hex}")
