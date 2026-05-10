@@ -249,16 +249,12 @@ def store_hash_on_chain(cert_id: int, cert_hash: str) -> Optional[str]:
 
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
 
-        # Wait until Polygon confirms transaction
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-
         tx_hash_hex = tx_hash.hex()
 
-        print(f"[Blockchain] Transaction confirmed in block {receipt.blockNumber}")
-
-        print(f"[Blockchain] Hash stored on chain. TX: {tx_hash_hex}")
+        print(f"[Blockchain] Transaction submitted. TX: {tx_hash_hex}")
         print(f"[Blockchain] View: https://amoy.polygonscan.com/tx/{tx_hash_hex}")
 
+        # Don't wait for receipt — return immediately so issuance is fast
         return tx_hash_hex
 
     except Exception as e:
