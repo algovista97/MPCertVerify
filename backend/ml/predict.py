@@ -263,3 +263,9 @@ def predict_forgery(
             class_names[i]: float(probs[i]) for i in range(len(class_names))
         },
     }
+def preload_model() -> None:
+    """Call at startup to load model into memory before first request."""
+    print("[ML] Preloading model at startup...")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _load_resnet_bundle(device)
+    print("[ML] Model preloaded successfully")

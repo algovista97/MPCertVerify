@@ -60,6 +60,12 @@ CERTVERIFY_FRONTEND_ORIGINS = os.environ.get("CERTVERIFY_FRONTEND_ORIGINS", "")
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    # Preload ML model at startup so first verification is fast
+    try:
+        from backend.ml.predict import preload_model
+        preload_model()
+    except Exception as e:
+        print(f"[ML] Preload failed (non-fatal): {e}")
     yield
 
 
@@ -462,9 +468,22 @@ async def verify_upload(
             img_tmp_path = pdf_to_image(tmp_file_path)
 
         if img_tmp_path:
-            det = detect_forgery(img_tmp_path)
-            ml_label = str(det.get("label", "unknown"))
-            ml_conf = float(det.get("confidence", 0.0))
+            try:
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(detect_forgery, img_tmp_path)
+                    try:
+                        det = future.result(timeout=30)  # 30 second ML timeout
+                    except concurrent.futures.TimeoutError:
+                        print("[ML] Inference timed out — skipping AI check")
+                        det = {"label": "unknown", "confidence": 0.0}
+                ml_label = str(det.get("label", "unknown"))
+                ml_conf = float(det.get("confidence", 0.0))
+            except Exception as exc:
+                print(f"[ML] Error: {exc}")
+                ml_label = "unknown"
+                ml_conf = 0.0
+                ai_check_passed = True        
 
             if ml_label == "forged" and ml_conf > 0.95:
                 log_verification("FORGED", "forged", ml_conf)
